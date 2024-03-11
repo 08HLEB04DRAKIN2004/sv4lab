@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Frontend</title>
+</head>
+<body>
+  <h1>Data from Backend</h1>
+  <button onclick="fetchData()">Fetch Data</button>
+  <button onclick="toggleForm()">Add Data</button>
+  <form id="dataForm" style="display:none;">
+    <label for="name">Name:</label><br>
+    <input type="text" id="name" name="name"><br>
+    <label for="position">Position:</label><br>
+    <input type="text" id="position" name="position"><br>
+    <label for="access">Access:</label><br>
+    <input type="text" id="access" name="access"><br>
+    <label for="birthdate">Birthdate:</label><br>
+    <input type="text" id="birthdate" name="birthdate"><br>
+    <label for="address">Address:</label><br>
+    <input type="text" id="address" name="address"><br>
+    <label for="phone">Phone:</label><br>
+    <input type="text" id="phone" name="phone"><br><br>
+    <button type="button" onclick="postData()">Submit</button>
+  </form>
+  <ul id="dataList"></ul>
+  <br>
+  <button onclick="downloadData('xml')">Download XML</button>
+  <button onclick="downloadData('html')">Download HTML</button>
+  <button onclick="downloadData('json')">Download JSON</button>
+
+  <script>
+    async function fetchData() {
+      try {
+        const form = document.getElementById('dataForm');
+        form.style.display = 'none'; // Скрыть форму
+
+        const response = await fetch('http://localhost:3000/api/data');
+        const data = await response.json();
+        const dataList = document.getElementById('dataList');
+        dataList.innerHTML = ''; // Очищаем список перед добавлением новых данных
+        data.forEach(item => {
+          const listItem = document.createElement('li');
+          listItem.textContent = `ID: ${item.id}, Name: ${item.name}, Position: ${item.position}, Access: ${item.access}, Birthdate: ${item.birthdate}, Address: ${item.address}, Phone: ${item.phone}`;
+          dataList.appendChild(listItem);
+        });
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    }
+
+    async function postData() {
+      const name = document.getElementById('name').value;
+      const position = document.getElementById('position').value;
+      const access = document.getElementById('access').value;
+      const birthdate = document.getElementById('birthdate').value;
+      const address = document.getElementById('address').value;
+      const phone = document.getElementById('phone').value;
+
+      const newData = { name, position, access, birthdate, address, phone };
+
+      try {
+        const response = await fetch('http://localhost:3000/api/data', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(newData)
+        });
+        const responseData = await response.json();
+        console.log(responseData);
+        fetchData(); // Обновляем данные после добавления
+      } catch (error) {
+        console.error('Error posting data:', error);
+      }
+    }
+
+    function toggleForm() {
+      const form = document.getElementById('dataForm');
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function downloadData(format) {
+      try {
+        const response = await fetch(`http://localhost:3000/api/data/format?format=${format}`);
+        const data = await response.blob();
+        const url = window.URL.createObjectURL(new Blob([data]));
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `data.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Error downloading data:', error);
+      }
+    }
+  </script>
+</body>
+</html>
